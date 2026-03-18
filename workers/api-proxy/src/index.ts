@@ -99,14 +99,14 @@ function rewriteAuthRedirectLocation(
 
 function rewriteNaverAuthorizeLocation(
   originLocation: string,
-  requestOrigin: string,
+  frontendUrl: string,
 ): string {
   try {
     const url = new URL(originLocation)
     if (url.hostname !== 'nid.naver.com') return originLocation
 
-    const workerCallback = `${requestOrigin}/api/v1/auth/naver/callback`
-    url.searchParams.set('redirect_uri', workerCallback)
+    const frontendCallback = `${frontendUrl}/api/v1/auth/naver/callback`
+    url.searchParams.set('redirect_uri', frontendCallback)
     return url.toString()
   } catch {
     return originLocation
@@ -367,7 +367,10 @@ export default {
         let nextLocation = location
 
         if (rewrittenPath === '/api/auth/naver/login') {
-          nextLocation = rewriteNaverAuthorizeLocation(nextLocation, requestUrl.origin)
+          nextLocation = rewriteNaverAuthorizeLocation(
+            nextLocation,
+            env.APP_FRONTEND_URL ?? 'https://jamit.growgardens.app',
+          )
         }
 
         nextLocation = rewriteAuthRedirectLocation(
