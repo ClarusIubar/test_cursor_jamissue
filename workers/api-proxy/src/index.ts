@@ -174,6 +174,23 @@ function notFound() {
   )
 }
 
+function buildNaverLoginUrl(env: Env): string {
+  const clientId = env.NAVER_CLIENT_ID || 'tfWW1wQ5XJRS7XKJbwzY'
+  const redirectUri = encodeURIComponent('https://jamit.growgardens.app/api/v1/auth/naver/callback')
+  const state = Math.random().toString(36).substring(7)
+  
+  return `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`
+}
+
+async function handleNaverLogin(env: Env): Promise<Response> {
+  const authUrl = buildNaverLoginUrl(env)
+  
+  return json({
+    auth_url: authUrl,
+    state_token: '',
+  })
+}
+
 async function handleNaverCallback(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return json({ error_code: 'METHOD_NOT_ALLOWED' }, { status: 405 })
@@ -290,6 +307,10 @@ export default {
 
     if (path === '/healthz') {
       return json({ status: 'ok', service: 'jamissyu-worker-proxy' })
+    }
+
+    if (path === '/api/v1/auth/naver/login' && method === 'GET') {
+      return handleNaverLogin(env)
     }
 
     if (path === '/api/v1/auth/naver/callback' && method === 'POST') {
