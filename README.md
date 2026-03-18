@@ -63,6 +63,23 @@ npm run build
 
 아래 값들은 직접 입력해야 하는 항목입니다.
 
+현재 자동 연결된 값(이미 반영됨):
+- Worker 프로젝트: `jamissyu-api-proxy`
+- Pages 프로젝트: `jamissyu-pages`
+- Frontend API 기준 URL: `https://jamissyu-api-proxy.yhh4433.workers.dev/api/v1`
+- Worker vars 기본값:
+    - `APP_ENV=worker-first`
+    - `APP_FRONTEND_URL=https://main.jamissyu-pages.pages.dev`
+    - `APP_CORS_ORIGINS=https://main.jamissyu-pages.pages.dev`
+    - `APP_NAVER_LOGIN_CALLBACK_URL=https://jamissyu-api-proxy.yhh4433.workers.dev/api/auth/naver/callback`
+    - `APP_STORAGE_BACKEND=supabase`
+    - `APP_SUPABASE_STORAGE_BUCKET=review-images`
+    - `APP_STAMP_UNLOCK_RADIUS_METERS=120`
+
+즉, 지금은 아래 2가지만 직접 입력하면 됩니다.
+- Worker Variable: `APP_SUPABASE_URL`
+- Worker Secret: `APP_SUPABASE_SERVICE_ROLE_KEY`
+
 빈값 템플릿 파일:
 - Worker: `workers/api-proxy/.dev.vars.example`
 - Frontend: `frontend/.env.example`

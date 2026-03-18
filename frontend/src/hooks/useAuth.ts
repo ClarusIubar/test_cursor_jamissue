@@ -24,15 +24,14 @@ export function useAuth() {
 
   const refreshMe = useCallback(async () => {
     const token = getAccessToken()
-    if (!token) {
-      setState({ status: 'anonymous' })
-      return
-    }
     try {
-      const me = await apiFetch<UserPublic>('/auth/me', { method: 'GET', auth: true })
+      const me = await apiFetch<UserPublic>('/auth/me', {
+        method: 'GET',
+        auth: Boolean(token),
+      })
       setState({ status: 'authenticated', user: me })
     } catch {
-      setAccessToken(null)
+      if (token) setAccessToken(null)
       setState({ status: 'anonymous' })
     }
   }, [])

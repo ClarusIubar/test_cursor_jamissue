@@ -1,4 +1,5 @@
 export interface Env {
+  APP_FRONTEND_URL?: string
   APP_ORIGIN_API_URL?: string
   APP_SUPABASE_SERVICE_ROLE_KEY?: string
   APP_SUPABASE_URL?: string
@@ -76,6 +77,40 @@ function rewritePathForOrigin(pathname: string): string {
     return pathname.replace('/api/v1/auth/', '/api/auth/')
   }
   return pathname
+}
+
+function rewriteAuthRedirectLocation(
+  originLocation: string,
+  frontendUrl: string,
+): string {
+  try {
+    const from = new URL(originLocation)
+    const to = new URL(frontendUrl)
+    if (from.hostname === 'jamissue.growgardens.app') {
+      from.protocol = to.protocol
+      from.host = to.host
+      return from.toString()
+    }
+  } catch {
+    // no-op
+  }
+  return originLocation
+}
+
+function rewriteNaverAuthorizeLocation(
+  originLocation: string,
+  requestOrigin: string,
+): string {
+  try {
+    const url = new URL(originLocation)
+    if (url.hostname !== 'nid.naver.com') return originLocation
+
+    const workerCallback = `${requestOrigin}/api/v1/auth/naver/callback`
+    url.searchParams.set('redirect_uri', workerCallback)
+    return url.toString()
+  } catch {
+    return originLocation
+  }
 }
 
 function resolveBackendOrigin(env: Env): string | null {
@@ -324,6 +359,25 @@ export default {
     headers.set('access-control-allow-origin', '*')
     headers.set('access-control-allow-methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
     headers.set('access-control-allow-headers', 'authorization,content-type')
+
+    const rewrittenPath = rewritePathForOrigin(requestUrl.pathname)
+    if (rewrittenPath.startsWith('/api/auth/')) {
+      const location = headers.get('location')
+      if (location) {
+        let nextLocation = location
+
+        if (rewrittenPath === '/api/auth/naver/login') {
+          nextLocation = rewriteNaverAuthorizeLocation(nextLocation, requestUrl.origin)
+        }
+
+        nextLocation = rewriteAuthRedirectLocation(
+          nextLocation,
+          env.APP_FRONTEND_URL ?? 'https://jamit.growgardens.app',
+        )
+
+        headers.set('location', nextLocation)
+      }
+    }
 
     return new Response(response.body, {
       status: response.status,
