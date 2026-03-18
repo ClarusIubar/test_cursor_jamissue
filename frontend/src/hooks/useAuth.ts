@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { apiFetch, getAccessToken, setAccessToken } from '../api/client'
+import { apiFetch, getAccessToken, getApiBaseUrl, setAccessToken } from '../api/client'
 
 export type UserPublic = {
   id: string
@@ -42,12 +42,19 @@ export function useAuth() {
   }, [refreshMe])
 
   const startNaverLogin = useCallback(async () => {
-    const { auth_url, state_token } = await apiFetch<{ auth_url: string; state_token: string }>(
-      '/auth/naver/login',
-      { method: 'GET' },
-    )
-    sessionStorage.setItem('jamissyu_oauth_state_token', state_token)
-    window.location.assign(auth_url)
+    try {
+      const { auth_url, state_token } = await apiFetch<{ auth_url: string; state_token: string }>(
+        '/auth/naver/login',
+        { method: 'GET' },
+      )
+      sessionStorage.setItem('jamissyu_oauth_state_token', state_token)
+      window.location.assign(auth_url)
+      return
+    } catch {
+      // Worker-first/JamIssue backend compatibility:
+      // some backends return redirect directly instead of JSON payload.
+      window.location.assign(`${getApiBaseUrl()}/auth/naver/login`)
+    }
   }, [])
 
   const finishNaverCallback = useCallback(

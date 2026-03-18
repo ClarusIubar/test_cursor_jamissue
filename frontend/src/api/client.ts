@@ -21,6 +21,10 @@ const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
   'http://127.0.0.1:8000/api/v1'
 
+export function getApiBaseUrl(): string {
+  return API_BASE_URL
+}
+
 export function getAccessToken(): string | null {
   return localStorage.getItem('jamissyu_access_token')
 }
@@ -44,7 +48,7 @@ export async function apiFetch<T>(
     if (token) headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const res = await fetch(url, { ...init, headers })
+  const res = await fetch(url, { ...init, headers, credentials: 'include' })
 
   const contentType = res.headers.get('content-type') ?? ''
   const isJson = contentType.includes('application/json')
