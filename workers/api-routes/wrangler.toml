@@ -1,0 +1,7 @@
+name = "jamissyu-api-routes"
+main = "src/index.ts"
+compatibility_date = "2026-03-18"
+
+[[routes]]
+pattern = "jamit.growgardens.app/api/v1/*"
+zone_name = "growgardens.app"

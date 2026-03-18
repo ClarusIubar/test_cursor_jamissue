@@ -2,6 +2,10 @@ name = "jamissyu-api-proxy"
 main = "src/index.ts"
 compatibility_date = "2026-03-18"
 
+[[routes]]
+pattern = "jamit.growgardens.app/api/v1/*"
+zone_name = "growgardens.app"
+
 [vars]
 APP_ENV = "worker-first"
 APP_FRONTEND_URL = "https://jamit.growgardens.app"
