@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import secrets
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -14,6 +16,35 @@ from app.schemas.auth import TokenResponse, UserPublic
 
 
 router = APIRouter(prefix="/dev", tags=["dev"])
+
+
+@router.get("/status")
+async def dev_status(db: AsyncSession = Depends(get_db)) -> dict:
+    db_connected = True
+    db_error = None
+
+    try:
+        await db.execute(text("SELECT 1"))
+    except (SQLAlchemyError, Exception) as exc:
+        db_connected = False
+        db_error = str(exc.__class__.__name__)
+
+    return {
+        "service": "jamissyu-backend",
+        "env": settings.env,
+        "dev_auth_enabled": settings.dev_auth_enabled,
+        "db_connected": db_connected,
+        "db_error": db_error,
+    }
+
+
+@router.get("/sample-places")
+async def sample_places() -> dict:
+    seed_path = Path(__file__).resolve().parents[3] / "sample_data" / "daejeon_places_seed.json"
+    import json
+
+    items = json.loads(seed_path.read_text(encoding="utf-8"))
+    return {"items": items}
 
 
 @router.post("/login", response_model=TokenResponse)

@@ -2,6 +2,9 @@
 .env
 backend/.env
 frontend/.env
+workers/**/.dev.vars
+.wrangler/
+**/.wrangler/
 
 # Python
 backend/.venv/

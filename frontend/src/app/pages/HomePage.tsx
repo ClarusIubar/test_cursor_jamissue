@@ -1,36 +1,54 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { MapView } from '../components/map/MapView'
-import { CategoryFilter } from '../components/category/CategoryFilter'
-import { PlaceCard } from '../components/place/PlaceCard'
-import { BottomSheet } from '../components/common/BottomSheet'
-import { getPlaces } from '../api/client'
-import { mockFeed } from '../data/mockFeed'
-import type { Place } from '../data/mockPlaces'
 import { List, Map, Sparkles } from 'lucide-react'
+
+import { BottomSheet } from '../components/common/BottomSheet'
+import { CategoryFilter } from '../components/category/CategoryFilter'
+import { MapView } from '../components/map/MapView'
+import { PlaceCard } from '../components/place/PlaceCard'
+import { getPlaces, listFeeds, type FeedPublic } from '../api/client'
+import type { Place } from '../data/mockPlaces'
+
+function formatDateLabel(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
+
+function shortUserId(userId: string) {
+  return `유저 ${userId.slice(0, 6)}`
+}
 
 export function HomePage() {
   const navigate = useNavigate()
   const [places, setPlaces] = useState<Place[]>([])
+  const [feeds, setFeeds] = useState<FeedPublic[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
   const [openSheet, setOpenSheet] = useState<'feed' | 'recommend' | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    getPlaces().then(setPlaces)
+    ;(async () => {
+      try {
+        const [placeItems, feedItems] = await Promise.all([getPlaces(), listFeeds()])
+        setPlaces(placeItems)
+        setFeeds(feedItems)
+      } catch {
+        setError('데이터를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.')
+      }
+    })()
   }, [])
 
   const filteredPlaces = useMemo(
-    () =>
-      selectedCategory
-        ? places.filter(p => p.category === selectedCategory)
-        : places,
+    () => (selectedCategory ? places.filter(place => place.category === selectedCategory) : places),
     [places, selectedCategory],
   )
-
-  const handlePlaceClick = (placeId: string) => {
-    navigate(`/place/${placeId}`)
-  }
 
   const closeSheet = () => setOpenSheet(null)
 
@@ -106,26 +124,20 @@ export function HomePage() {
       <div className="flex-1 overflow-hidden">
         {viewMode === 'map' ? (
           <div className="h-full p-4">
-            <MapView
-              places={filteredPlaces}
-              onPlaceClick={place => handlePlaceClick(place.id)}
-              selectedCategory={selectedCategory}
-            />
+            <MapView places={filteredPlaces} onPlaceClick={place => navigate(`/place/${place.id}`)} selectedCategory={selectedCategory} />
           </div>
         ) : (
           <div className="h-full overflow-y-auto px-4 py-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-4">
               {filteredPlaces.map(place => (
-                <PlaceCard
-                  key={place.id}
-                  place={place}
-                  onClick={() => handlePlaceClick(place.id)}
-                />
+                <PlaceCard key={place.id} place={place} onClick={() => navigate(`/place/${place.id}`)} />
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {error ? <div className="px-4 pb-2 text-[11px] text-destructive">{error}</div> : null}
 
       <BottomSheet
         open={openSheet !== null}
@@ -134,18 +146,25 @@ export function HomePage() {
       >
         {openSheet === 'feed' ? (
           <div className="space-y-3">
-            {mockFeed.map(item => (
-              <div key={item.id} className="p-3 bg-card rounded-2xl border border-border">
+            {feeds.length === 0 ? <div className="text-[11px] text-muted-foreground">아직 등록된 피드가 없어요.</div> : null}
+            {feeds.map(feed => (
+              <button
+                key={feed.id}
+                onClick={() => {
+                  navigate(`/place/${feed.position_id}`)
+                  closeSheet()
+                }}
+                className="w-full text-left p-3 bg-card rounded-2xl border border-border"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-medium">{item.userName}</p>
-                    <p className="text-[9px] text-muted-foreground">{item.createdAt}</p>
+                    <p className="text-[11px] font-medium">{shortUserId(feed.user_id)}</p>
+                    <p className="text-[9px] text-muted-foreground">{formatDateLabel(feed.created_at)}</p>
                   </div>
-                  <span className="text-xl">{item.userAvatar}</span>
+                  <span className="text-xl">🍞</span>
                 </div>
-                <h3 className="mt-2 text-[12px] font-semibold">{item.title}</h3>
-                <p className="mt-1 text-[11px] text-muted-foreground">{item.content}</p>
-              </div>
+                <p className="mt-2 text-[11px] text-foreground line-clamp-3">{feed.content}</p>
+              </button>
             ))}
           </div>
         ) : (
@@ -154,7 +173,7 @@ export function HomePage() {
               <button
                 key={place.id}
                 onClick={() => {
-                  handlePlaceClick(place.id)
+                  navigate(`/place/${place.id}`)
                   closeSheet()
                 }}
                 className="w-full text-left p-3 bg-card rounded-2xl border border-border flex items-center justify-between"

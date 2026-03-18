@@ -18,6 +18,13 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
+### Quick checks
+- `GET /` : 서버 상태
+- `GET /healthz` : 헬스체크
+- `GET /docs` : Swagger 문서
+- `GET /api/v1/dev/status` : DB 연결 상태 포함 개발 상태
+- `GET /api/v1/dev/sample-places` : 샘플 장소 JSON 확인 (DB 불필요)
+
 ### Environment
 Create `backend/.env`:
 

@@ -18,7 +18,10 @@ export function MainLayout() {
   }
 
   // 로그인 페이지나 상세 페이지에서는 내비게이션 숨기기
-  const hideNav = location.pathname === '/login' || location.pathname.startsWith('/place/')
+  const hideNav =
+    location.pathname === '/login' ||
+    location.pathname.startsWith('/place/') ||
+    location.pathname.startsWith('/auth/')
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background overflow-hidden">

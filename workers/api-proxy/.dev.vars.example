@@ -1,0 +1,3 @@
+# Local only (do NOT commit real secrets)
+# Copy to .dev.vars and modify for local wrangler dev.
+BACKEND_ORIGIN=http://127.0.0.1:8012

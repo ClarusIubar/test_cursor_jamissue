@@ -17,6 +17,14 @@ logger = logging.getLogger("jamissyu")
 def create_app() -> FastAPI:
     app = FastAPI(default_response_class=ORJSONResponse)
 
+    @app.get("/")
+    async def root_status() -> dict[str, str]:
+        return {"service": "jamissyu-backend", "status": "ok"}
+
+    @app.get("/healthz")
+    async def healthz() -> dict[str, str]:
+        return {"status": "ok"}
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.frontend_origin],

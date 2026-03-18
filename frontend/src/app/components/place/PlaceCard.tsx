@@ -3,6 +3,13 @@ import { categoryInfo } from '../../data/mockPlaces'
 import { ChevronRight } from 'lucide-react'
 import { ImageWithFallback } from '../figma/ImageWithFallback'
 
+const badgeClassName: Record<Place['category'], string> = {
+  restaurant: 'bg-rose-400/80',
+  cafe: 'bg-sky-400/80',
+  attraction: 'bg-pink-300/80',
+  culture: 'bg-cyan-300/80',
+}
+
 interface PlaceCardProps {
   place: Place
   onClick: () => void
@@ -25,10 +32,7 @@ export function PlaceCard({ place, onClick }: PlaceCardProps) {
         />
 
         {/* 카테고리 뱃지 */}
-        <div
-          className="absolute top-2 left-2 px-2 py-1 rounded-full backdrop-blur-sm flex items-center gap-1"
-          style={{ backgroundColor: `${categoryData.color}CC` }}
-        >
+        <div className={`absolute top-2 left-2 px-2 py-1 rounded-full backdrop-blur-sm flex items-center gap-1 ${badgeClassName[place.category]}`}>
           <span className="text-xs">{categoryData.icon}</span>
           <span className="text-[8px] text-white font-medium">{categoryData.name}</span>
         </div>
