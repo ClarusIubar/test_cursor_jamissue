@@ -1,5 +1,7 @@
 export interface Env {
   APP_ORIGIN_API_URL?: string
+  APP_SUPABASE_SERVICE_ROLE_KEY?: string
+  APP_SUPABASE_URL?: string
   BACKEND_ORIGIN?: string
 }
 
@@ -69,9 +71,58 @@ function buildTargetUrl(requestUrl: URL, backendOrigin: string) {
   return target
 }
 
+function getSupabaseConfig(env: Env) {
+  const url = env.APP_SUPABASE_URL?.trim()
+  const serviceRoleKey = env.APP_SUPABASE_SERVICE_ROLE_KEY?.trim()
+  if (!url || !serviceRoleKey) return null
+  return { url: url.replace(/\/$/, ''), serviceRoleKey }
+}
+
+async function supabaseFetch<T>(
+  env: Env,
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const config = getSupabaseConfig(env)
+  if (!config) {
+    throw new Error('supabase_not_configured')
+  }
+
+  const headers = new Headers(init.headers)
+  headers.set('apikey', config.serviceRoleKey)
+  headers.set('authorization', `Bearer ${config.serviceRoleKey}`)
+  if (!headers.has('content-type')) headers.set('content-type', 'application/json')
+
+  const response = await fetch(`${config.url}/rest/v1/${path}`, {
+    ...init,
+    headers,
+  })
+
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(`supabase_error:${response.status}:${detail}`)
+  }
+
+  return (await response.json()) as T
+}
+
+function notFound() {
+  return json(
+    {
+      error_code: 'BREAD_NOT_FOUND',
+      message: '식빵이 길을 잃었어요!',
+      hint: 'endpoint를 확인해 주세요',
+    },
+    { status: 404 },
+  )
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const requestUrl = new URL(request.url)
+    const path = requestUrl.pathname
+    const method = request.method
+    const segments = path.split('/').filter(Boolean)
 
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -84,34 +135,132 @@ export default {
       })
     }
 
-    if (requestUrl.pathname === '/healthz') {
+    if (path === '/healthz') {
       return json({ status: 'ok', service: 'jamissyu-worker-proxy' })
     }
 
-    if (requestUrl.pathname === '/api/v1/dev/sample-places') {
+    if (path === '/api/v1/dev/sample-places') {
       return json({ items: SAMPLE_PLACES })
     }
 
-    if (requestUrl.pathname === '/api/v1/map/places') {
-      const items = SAMPLE_PLACES.map((it, index) => ({
-        id: `sample-${index}`,
-        title: it.title,
-        category: it.category,
-        lat: it.lat,
-        lng: it.lng,
-        address: it.address,
-      }))
-      return json({ items })
+    if (path === '/api/v1/map/places' && method === 'GET') {
+      try {
+        const items = await supabaseFetch<
+          Array<{
+            id: string
+            title: string
+            category: string
+            lat: number
+            lng: number
+            address: string | null
+          }>
+        >(env, 'map?select=id,title,category,lat,lng,address&order=created_at.desc')
+        return json({ items })
+      } catch {
+        const items = SAMPLE_PLACES.map((it, index) => ({
+          id: `sample-${index}`,
+          title: it.title,
+          category: it.category,
+          lat: it.lat,
+          lng: it.lng,
+          address: it.address,
+        }))
+        return json({ items })
+      }
     }
 
-    if (requestUrl.pathname === '/api/v1/feed') {
-      return json({ items: [] })
+    if (path === '/api/v1/feed' && method === 'GET') {
+      try {
+        const positionId = requestUrl.searchParams.get('position_id')
+        const params = [
+          'select=id,user_id,position_id,content,image_url,created_at',
+          'order=created_at.desc',
+        ]
+        if (positionId) params.push(`position_id=eq.${encodeURIComponent(positionId)}`)
+
+        const items = await supabaseFetch<
+          Array<{
+            id: string
+            user_id: string
+            position_id: string
+            content: string
+            image_url: string | null
+            created_at: string
+          }>
+        >(env, `feed?${params.join('&')}`)
+
+        return json({ items })
+      } catch {
+        return json({ items: [] })
+      }
     }
 
-    if (requestUrl.pathname === '/api/v1/dev/status') {
+    if (segments.length === 4 && segments[0] === 'api' && segments[1] === 'v1' && segments[2] === 'feed' && method === 'GET') {
+      const feedId = segments[3]
+      try {
+        const feeds = await supabaseFetch<
+          Array<{
+            id: string
+            user_id: string
+            position_id: string
+            content: string
+            image_url: string | null
+            created_at: string
+          }>
+        >(
+          env,
+          `feed?select=id,user_id,position_id,content,image_url,created_at&id=eq.${encodeURIComponent(feedId)}&limit=1`,
+        )
+
+        const feed = feeds[0]
+        if (!feed) return notFound()
+
+        const comments = await supabaseFetch<
+          Array<{
+            id: string
+            feed_id: string
+            user_id: string
+            content: string
+            created_at: string
+          }>
+        >(
+          env,
+          `comment?select=id,feed_id,user_id,content,created_at&feed_id=eq.${encodeURIComponent(feedId)}&order=created_at.asc`,
+        )
+
+        return json({ feed, comments })
+      } catch {
+        return notFound()
+      }
+    }
+
+    if (path === '/api/v1/dev/status') {
+      const supabaseConfigured = Boolean(getSupabaseConfig(env))
+      if (supabaseConfigured) {
+        try {
+          await supabaseFetch<Array<{ id: string }>>(env, 'map?select=id&limit=1')
+          return json({
+            service: 'jamissyu-worker-proxy',
+            env: 'worker',
+            supabase_configured: true,
+            db_connected: true,
+            db_error: null,
+          })
+        } catch {
+          return json({
+            service: 'jamissyu-worker-proxy',
+            env: 'worker',
+            supabase_configured: true,
+            db_connected: false,
+            db_error: 'supabase_unreachable_or_schema_mismatch',
+          })
+        }
+      }
+
       return json({
         service: 'jamissyu-worker-proxy',
         env: 'worker',
+        supabase_configured: false,
         dev_auth_enabled: false,
         db_connected: false,
         db_error: 'backend_not_public',
