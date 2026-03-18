@@ -1,4 +1,5 @@
 export interface Env {
+  APP_ORIGIN_API_URL?: string
   BACKEND_ORIGIN?: string
 }
 
@@ -117,7 +118,7 @@ export default {
       })
     }
 
-    const backendOrigin = env.BACKEND_ORIGIN ?? 'http://127.0.0.1:8012'
+    const backendOrigin = env.APP_ORIGIN_API_URL ?? env.BACKEND_ORIGIN ?? 'http://127.0.0.1:8012'
     const target = buildTargetUrl(requestUrl, backendOrigin)
 
     const proxiedRequest = new Request(target.toString(), request)
@@ -129,7 +130,7 @@ export default {
         {
           error_code: 'BACKEND_UNREACHABLE',
           message: '백엔드 원점에 연결할 수 없어요.',
-          hint: 'Workers env.BACKEND_ORIGIN을 공개 URL로 설정해 주세요.',
+          hint: 'Workers env.APP_ORIGIN_API_URL(또는 BACKEND_ORIGIN)을 공개 URL로 설정해 주세요.',
         },
         { status: 502 },
       )

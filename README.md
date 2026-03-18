@@ -64,7 +64,8 @@ npm run build
 아래 값들은 직접 입력해야 하는 항목입니다.
 
 #### A. Worker (workers/api-proxy) 시크릿
-- 필수: `BACKEND_ORIGIN`
+- 필수(권장): `APP_ORIGIN_API_URL`  *(JamIssue 기준 이름)*
+- 필수(호환): `BACKEND_ORIGIN`  *(현재 레포 호환 이름)*
     - 값 예시: `https://api.your-domain.com`
     - 의미: Worker가 프록시할 실제 백엔드 주소
 
@@ -72,8 +73,11 @@ npm run build
 ```bash
 cd workers/api-proxy
 npx wrangler login
-npx wrangler secret put BACKEND_ORIGIN
+npx wrangler secret put APP_ORIGIN_API_URL
 # 프롬프트가 뜨면 실제 백엔드 URL 입력 (예: https://api.your-domain.com)
+
+# (선택) 호환 이름도 사용 가능
+npx wrangler secret put BACKEND_ORIGIN
 ```
 
 로컬 테스트용(선택):
@@ -83,6 +87,12 @@ cp .dev.vars.example .dev.vars
 # .dev.vars의 BACKEND_ORIGIN을 로컬/개발 백엔드 주소로 수정
 npx wrangler dev --config wrangler.toml --ip 127.0.0.1 --port 8787
 ```
+
+JamIssue 참조 구조를 그대로 쓰려면(선택):
+- Worker Variables: `APP_ENV`, `APP_FRONTEND_URL`, `APP_CORS_ORIGINS`, `APP_NAVER_LOGIN_CALLBACK_URL`, `APP_STORAGE_BACKEND`, `APP_SUPABASE_URL`, `APP_SUPABASE_STORAGE_BUCKET`, `APP_STAMP_UNLOCK_RADIUS_METERS`
+- Worker Secrets: `APP_SESSION_SECRET`, `APP_JWT_SECRET`, `APP_DATABASE_URL`, `APP_SUPABASE_SERVICE_ROLE_KEY`, `APP_NAVER_LOGIN_CLIENT_ID`, `APP_NAVER_LOGIN_CLIENT_SECRET`
+
+> 참고: 현재 저장소는 메인 백엔드가 `FastAPI + SQLAlchemy + Postgres`이며, JamIssue의 Worker-First + Supabase 키 이름은 호환 목적으로만 반영했습니다.
 
 #### B. Frontend (frontend) 빌드 키
 - 필수: `VITE_API_BASE_URL`
@@ -112,7 +122,7 @@ cp .env.example .env
     - `DAEJEON_API_PATH`
     - `DAEJEON_SERVICE_KEY`
 
-> 요약: Worker는 `BACKEND_ORIGIN` 시크릿을 반드시 넣어야 실제 백엔드로 프록시됩니다.
+> 요약: Worker는 `APP_ORIGIN_API_URL`(권장) 또는 `BACKEND_ORIGIN`(호환) 시크릿을 반드시 넣어야 실제 백엔드로 프록시됩니다.
 
 ### 4) 화면으로 MVP 동작 테스트 플로우
 - **(키가 없으면)** 우측 상단의 `seed`, `dev 로그인`으로도 피드 작성 흐름까지 테스트 가능
@@ -122,4 +132,3 @@ cp .env.example .env
   - 상세에서 **현재 위치로 피드 남기기** → 서버가 **50m** 검증 후 저장
 
 상세 내용은 `walkthrough.md` 참고.
-
