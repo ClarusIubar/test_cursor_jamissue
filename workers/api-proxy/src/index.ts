@@ -71,6 +71,26 @@ function buildTargetUrl(requestUrl: URL, backendOrigin: string) {
   return target
 }
 
+function rewritePathForOrigin(pathname: string): string {
+  if (pathname.startsWith('/api/v1/auth/')) {
+    return pathname.replace('/api/v1/auth/', '/api/auth/')
+  }
+  return pathname
+}
+
+function resolveBackendOrigin(env: Env): string | null {
+  const candidate = env.APP_ORIGIN_API_URL?.trim() || env.BACKEND_ORIGIN?.trim() || ''
+  if (!candidate) return null
+
+  try {
+    const parsed = new URL(candidate)
+    if (!parsed.protocol.startsWith('http')) return null
+    return parsed.origin
+  } catch {
+    return null
+  }
+}
+
 function getSupabaseConfig(env: Env) {
   const url = env.APP_SUPABASE_URL?.trim()
   const serviceRoleKey = env.APP_SUPABASE_SERVICE_ROLE_KEY?.trim()
@@ -267,8 +287,23 @@ export default {
       })
     }
 
-    const backendOrigin = env.APP_ORIGIN_API_URL ?? env.BACKEND_ORIGIN ?? 'http://127.0.0.1:8012'
-    const target = buildTargetUrl(requestUrl, backendOrigin)
+    const backendOrigin = resolveBackendOrigin(env)
+
+    if (!backendOrigin) {
+      return json(
+        {
+          error_code: 'BACKEND_ORIGIN_NOT_SET',
+          message: '백엔드 원점 URL이 설정되지 않았어요.',
+          hint: 'APP_ORIGIN_API_URL(또는 BACKEND_ORIGIN)에 https://... 형식의 URL을 입력해 주세요.',
+        },
+        { status: 503 },
+      )
+    }
+
+    const target = buildTargetUrl(
+      new URL(`${rewritePathForOrigin(requestUrl.pathname)}${requestUrl.search}`, requestUrl.origin),
+      backendOrigin,
+    )
 
     const proxiedRequest = new Request(target.toString(), request)
     let response: Response
