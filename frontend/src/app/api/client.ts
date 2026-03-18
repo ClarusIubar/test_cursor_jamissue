@@ -8,10 +8,15 @@ export async function getPlaces(): Promise<Place[]> {
     return Promise.resolve(mockPlaces)
   }
 
-  const res = await fetch(`${API_BASE_URL}/places`)
-  if (!res.ok) {
-    throw new Error('Failed to fetch places')
-  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/places`)
+    if (!res.ok) {
+      throw new Error('Failed to fetch places')
+    }
 
-  return res.json()
+    return res.json()
+  } catch (error) {
+    console.warn('Failed to fetch places from backend, falling back to mock:', error)
+    return mockPlaces
+  }
 }
