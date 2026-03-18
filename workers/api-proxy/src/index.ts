@@ -4,6 +4,8 @@ export interface Env {
   APP_SUPABASE_SERVICE_ROLE_KEY?: string
   APP_SUPABASE_URL?: string
   BACKEND_ORIGIN?: string
+  NAVER_CLIENT_ID?: string
+  NAVER_CLIENT_SECRET?: string
 }
 
 type SamplePlace = {
@@ -172,6 +174,102 @@ function notFound() {
   )
 }
 
+async function handleNaverCallback(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return json({ error_code: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+  }
+
+  try {
+    const body = await request.json() as { code?: string; state?: string; state_token?: string }
+    
+    if (!body.code) {
+      return json({ error_code: 'MISSING_CODE', message: '인증 코드가 없습니다' }, { status: 400 })
+    }
+
+    const redirectUri = `${new URL(request.url).origin}/api/v1/auth/naver/callback`
+    const clientId = env.NAVER_CLIENT_ID || 'tfWW1wQ5XJRS7XKJbwzY'
+    const clientSecret = env.NAVER_CLIENT_SECRET || ''
+
+    if (!clientSecret) {
+      return json(
+        { error_code: 'NAVER_NOT_CONFIGURED', message: 'Naver 설정이 없습니다' },
+        { status: 500 },
+      )
+    }
+
+    const tokenResponse = await fetch('https://nid.naver.com/oauth2.0/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: body.code,
+        state: body.state || '',
+        redirect_uri: redirectUri,
+      }).toString(),
+    })
+
+    if (!tokenResponse.ok) {
+      const error = await tokenResponse.text()
+      return json(
+        { error_code: 'NAVER_TOKEN_ERROR', message: error },
+        { status: 401 },
+      )
+    }
+
+    const tokenData = (await tokenResponse.json()) as { access_token?: string }
+    const accessToken = tokenData.access_token
+
+    if (!accessToken) {
+      return json(
+        { error_code: 'NO_ACCESS_TOKEN', message: 'Naver에서 토큰을 받지 못했습니다' },
+        { status: 401 },
+      )
+    }
+
+    const profileResponse = await fetch('https://openapi.naver.com/v1/nid/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+
+    if (!profileResponse.ok) {
+      return json(
+        { error_code: 'NAVER_PROFILE_ERROR', message: '프로필 조회 실패' },
+        { status: 401 },
+      )
+    }
+
+    const profileData = (await profileResponse.json()) as { response?: { id?: string; nickname?: string; profile_image?: string } }
+    const profile = profileData.response || {}
+    const naverId = profile.id || ''
+
+    if (!naverId) {
+      return json(
+        { error_code: 'NAVER_NO_ID', message: 'Naver ID를 받지 못했습니다' },
+        { status: 401 },
+      )
+    }
+
+    const mockUser = {
+      id: `naver_${naverId}`,
+      naver_id: naverId,
+      nickname: profile.nickname || 'User',
+      profile_image_url: profile.profile_image,
+    }
+
+    return json({
+      access_token: accessToken,
+      user: mockUser,
+    })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '알 수 없는 오류'
+    return json(
+      { error_code: 'CALLBACK_ERROR', message: msg },
+      { status: 500 },
+    )
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const requestUrl = new URL(request.url)
@@ -192,6 +290,10 @@ export default {
 
     if (path === '/healthz') {
       return json({ status: 'ok', service: 'jamissyu-worker-proxy' })
+    }
+
+    if (path === '/api/v1/auth/naver/callback' && method === 'POST') {
+      return handleNaverCallback(request, env)
     }
 
     if (path === '/api/v1/dev/sample-places') {
