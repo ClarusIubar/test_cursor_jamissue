@@ -1,0 +1,142 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #FFF5F8;
+  --foreground: #3D3D3D;
+  --card: #FFFFFF;
+  --card-foreground: #3D3D3D;
+  --popover: #FFFFFF;
+  --popover-foreground: #3D3D3D;
+  --primary: #FFB3C6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #A8D5E2;
+  --secondary-foreground: #3D3D3D;
+  --muted: #F8E8EE;
+  --muted-foreground: #9E9E9E;
+  --accent: #FFD4E0;
+  --accent-foreground: #3D3D3D;
+  --destructive: #FF6B9D;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(255, 179, 198, 0.2);
+  --input: transparent;
+  --input-background: #FFFFFF;
+  --switch-background: #FFD4E0;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #FFB3C6;
+  --chart-1: #FFB3C6;
+  --chart-2: #A8D5E2;
+  --chart-3: #FFD4E0;
+  --chart-4: #C9E4EA;
+  --chart-5: #FFC9D9;
+  --radius: 1rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #3D3D3D;
+  --sidebar-primary: #FFB3C6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FFF5F8;
+  --sidebar-accent-foreground: #3D3D3D;
+  --sidebar-border: rgba(255, 179, 198, 0.2);
+  --sidebar-ring: #FFB3C6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: -0.02rem;
+    line-height: 1.4;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+  }
+
+  h4 {
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+  }
+
+  p, label {
+    font-size: 12px;
+    font-weight: var(--font-weight-normal);
+    line-height: 1.4;
+  }
+
+  button {
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+  }
+
+  input {
+    font-size: 12px;
+    font-weight: var(--font-weight-normal);
+    line-height: 1.4;
+  }
+}
