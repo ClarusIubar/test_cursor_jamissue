@@ -1,3 +1,13 @@
 name = "jamissyu-api-proxy"
 main = "src/index.ts"
 compatibility_date = "2026-03-18"
+
+[vars]
+APP_ENV = ""
+APP_FRONTEND_URL = ""
+APP_CORS_ORIGINS = ""
+APP_NAVER_LOGIN_CALLBACK_URL = ""
+APP_STORAGE_BACKEND = ""
+APP_SUPABASE_URL = ""
+APP_SUPABASE_STORAGE_BUCKET = ""
+APP_STAMP_UNLOCK_RADIUS_METERS = ""

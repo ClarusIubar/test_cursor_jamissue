@@ -1,3 +1,26 @@
 # Local only (do NOT commit real secrets)
-# Copy to .dev.vars and modify for local wrangler dev.
-BACKEND_ORIGIN=http://127.0.0.1:8012
+# Copy to .dev.vars and fill values.
+
+# --- Core origin/proxy ---
+APP_ORIGIN_API_URL=
+BACKEND_ORIGIN=
+
+# --- Supabase ---
+APP_SUPABASE_URL=
+APP_SUPABASE_SERVICE_ROLE_KEY=
+
+# --- JamIssue style optional vars ---
+APP_ENV=
+APP_FRONTEND_URL=
+APP_CORS_ORIGINS=
+APP_NAVER_LOGIN_CALLBACK_URL=
+APP_STORAGE_BACKEND=
+APP_SUPABASE_STORAGE_BUCKET=
+APP_STAMP_UNLOCK_RADIUS_METERS=
+
+# --- JamIssue style optional secrets ---
+APP_SESSION_SECRET=
+APP_JWT_SECRET=
+APP_DATABASE_URL=
+APP_NAVER_LOGIN_CLIENT_ID=
+APP_NAVER_LOGIN_CLIENT_SECRET=

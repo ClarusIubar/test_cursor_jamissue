@@ -63,6 +63,10 @@ npm run build
 
 아래 값들은 직접 입력해야 하는 항목입니다.
 
+빈값 템플릿 파일:
+- Worker: `workers/api-proxy/.dev.vars.example`
+- Frontend: `frontend/.env.example`
+
 도입 상태:
 - `workers/api-proxy`는 이제 `APP_SUPABASE_URL` + `APP_SUPABASE_SERVICE_ROLE_KEY`가 설정되면
     `GET /api/v1/map/places`, `GET /api/v1/feed`, `GET /api/v1/feed/:id`를 Supabase REST에서 직접 읽습니다.
